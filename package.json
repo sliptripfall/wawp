@@ -1,0 +1,22 @@
+{
+  "name": "wawp",
+  "version": "0.1.0",
+  "description": "What Are We Playing? A game decision discord bot.",
+  "main": "bot.js",
+  "author": "Trevor",
+  "repository": "https://github.com/sliptripfall/wawp",
+  "license": "MIT",
+  "scripts": {
+    "start": "node wawp.js"
+  },
+  "dependencies": {
+    "consolelog": "^2.1.3",
+    "discord.js": "^11.3.0",
+    "glob": "^7.1.2",
+    "googleapis": "^25.0.0",
+    "json2csv": "^3.11.5",
+    "request": "^2.83.0",
+    "sqlite": "^2.9.1",
+    "underscore": "^1.8.3"
+  }
+}
