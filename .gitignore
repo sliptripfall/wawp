@@ -2,7 +2,6 @@ config.json
 wawp.sqlite
 serviceAccountKey.json
 node_modules/
-package-lock.json
 backup.dump
 backup.dump.*
 *.png
