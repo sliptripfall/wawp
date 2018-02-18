@@ -1,7 +1,9 @@
 config.json
-wawp.sqlite
+wawp.sqlite*
 serviceAccountKey.json
 node_modules/
 backup.dump
 backup.dump.*
 *.png
+logs/*
+backups/*

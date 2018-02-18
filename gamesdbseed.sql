@@ -1,4 +1,3 @@
-BEGIN TRANSACTION;
 DELETE FROM games;
 DELETE FROM SQLITE_SEQUENCE WHERE name='games';
 INSERT OR REPLACE INTO games (appid,name,tags) VALUES("b001", "Wolrd of Warcaraft", "2p,3p,4p,5p,6p,7p,8p,9p,10p,11p,12p,MMO");
@@ -846,4 +845,3 @@ INSERT OR REPLACE INTO games (appid,name,tags) VALUES("529520","Mutant Football 
 INSERT OR REPLACE INTO games (appid,name,tags) VALUES("595430","Sky Knights","");
 INSERT OR REPLACE INTO games (appid,name,tags) VALUES("607460","Epic Snails","");
 CREATE UNIQUE INDEX IF NOT EXISTS games_appid ON games (appid);
-COMMIT;
