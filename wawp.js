@@ -66,7 +66,6 @@ bot.on("ready", function () {
         db = undefined
         sql = undefined
     }
-
 })
 
 // Direct bot logs to logging wrapper
@@ -103,7 +102,6 @@ bot.on("message", message => {
                         db.run(query, function(err){
                             if(err) { logging.debug(`EXEC SQL: Error: ${JSON.stringify(err)}`) }
                         })
-
                     })
                 db.exec("commit")
                 logging.debug("Bulk DB Insert Completed")
@@ -377,11 +375,9 @@ bot.on("message", message => {
 
                 // 0ds is 0 for numeric sorting, and ds for discord snowflake - if you don't have a steam64id you still have to be unique
                 var steam64id = (args[0]) ? args[0] : `0ds${message.author.id}`
-
                 var myname = (!message.member.nickname) ? message.author.username : message.member.nickname 
 
                 logging.debug(`SQL: INSERT INTO players (name, steamid, discordsnowflake) VALUES (${myname},${steam64id},${message.author.id})`)
-
                 queryThis("run", "INSERT INTO players (name, steamid, discordsnowflake) VALUES (?,?,?)", [myname,steam64id,message.author.id], function(err){
                     if(err) {
                         logging.error(`ADDME: could not add you ${JSON.stringify(err)}`)
@@ -394,10 +390,9 @@ bot.on("message", message => {
             break}
             case "getplayers": {
             // getplayers - List all players registered
-
-                logging.debug("SQL: SELECT name FROM players")
                 var selectPlayersNames = "SELECT name FROM players"
 
+                logging.debug("SQL: SELECT name FROM players")
                 queryThis("all", selectPlayersNames, null, function(err, rows) {
                     if(err){
                         logging.error(`GETPLAYERS: could not get players ${JSON.stringify(err)}`)
@@ -475,9 +470,7 @@ bot.on("message", message => {
             break}
             case "getallgames": {
             // getallgames - Retrives all games in database, uses GC Storage
-
                 var useCsv = (args[0] == "csv") ? true : false
-                
                 var allGames = "SELECT appid,name,tags FROM games"
 
                 queryThis("all", allGames, null, function(err, rows) {
@@ -523,7 +516,6 @@ bot.on("message", message => {
                                     logging.error(`Error was: ${JSON.stringify(err)} and body was: ${JSON.stringify(body)}`)
                                     return false
                                 } else if ( res.statusCode == 200) {
-
                                     var body = JSON.parse(body) // eslint-disable-line no-redeclare
                                     var link = body.mediaLink.toString()
 
@@ -568,7 +560,6 @@ bot.on("message", message => {
                 // Use SteamAPI to get list of games for player
                 function setSteam64(Steam64ID) { // eslint-disable-line no-inner-declarations
                     var steamurl = "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key="+steamapikey+'&format=json&input_json={"steamid": '+Steam64ID+"}" // eslint-disable-line quotes
-
                     logging.debug(`STEAM URL: ${steamurl}`)
 
                     request.get({
@@ -583,7 +574,6 @@ bot.on("message", message => {
                             logging.debug(`Status: ${res.statusCode}`)
                             message.reply("Your Steam64ID is probably not correct. Delete and readd yourself with your Steam64ID https://steamidfinder.com/")
                         } else {
-
                           // Pulls appids from json API query, reflecting owned games
                           var appids = _.map(data.response.games, function(o) {return _.pick(o, "appid") })
 
@@ -603,7 +593,6 @@ bot.on("message", message => {
                             return false
                         } else {
                             if(rows) {
-                                
                                 var dbGames = _.pluck(rows, "appid")
                                 var userGames = _.pluck(steamGames, "appid")
                                 var compatList = _.intersection(dbGames, userGames)
@@ -616,7 +605,6 @@ bot.on("message", message => {
                                     logging.debug(`Created compat list: ${compatList}`)
                                     showCompatGames(compatList)
                                 }
-
                             } else {
                                 logging.warn("There are no players in the database")
                                 message.reply("There are no players in the database")
@@ -633,17 +621,14 @@ bot.on("message", message => {
                         message.reply("Hey, run the seeder or add games to the db")
                         return false
                     } else {
-
                         var gameSQL = `SELECT name,appid FROM games WHERE appid IN (${compatList})`
 
                         logging.debug(`SQL: SELECT name,appid FROM games WHERE appid IN (${compatList})`)
                         queryThis("all", gameSQL, null, function(err, rows) {
-                   
                             logging.debug(`The data is: ${_.pluck(rows, "name")}`)
                             logging.debug(`The compat list is ${compatList}`)
 
                             var start = Date.now()
-
                             var gameSQL = []
 
                             rows.forEach(function (arrayItem){
@@ -731,7 +716,6 @@ bot.on("message", message => {
                 } else {
 
                     var snowflakelookup = args
-
                     var getSnowFlake = `SELECT discordsnowflake FROM players WHERE name IN (${snowflakelookup.map(function() { return "?" }).join(",")})`
 
                     logging.debug(`SQL: SELECT discordsnowflake FROM players WHERE name IN (${snowflakelookup})`)
@@ -742,7 +726,6 @@ bot.on("message", message => {
                             return false
                         } else {
                             if(rows) {
-
                                 // We may only get 1 result back from the database, verify we have something to compare against
                                 if( _.pluck(rows, "discordsnowflake") > 2) {
                                     logging.debug(`No games matched, ensure players are in ${commandPrefix}getplayers and that you aren't comparing yourself`)
@@ -772,7 +755,6 @@ bot.on("message", message => {
                                         if(rows.length > 0) {
 
                                             var listOfApps = _.pluck(rows, "appid")
-
                                             var selectName = `SELECT name FROM games WHERE appid IN (${listOfApps.map(function() { return "?" }).join(",")})`
 
                                             logging.debug(`SQL: SELECT name FROM games WHERE appid IN ('${listOfApps.join("','")}')`, listOfApps)
@@ -783,10 +765,9 @@ bot.on("message", message => {
                                                     return false
                                                 } else {
                                                     if(rows) {
-
                                                         var namesOfGames = _.pluck(rows, "name").sort().join(" , ")
-
                                                         logging.debug(`Names of Games: ${namesOfGames}`)
+
                                                         // Max body length is 2k
                                                         if(namesOfGames.length <= 1900) {
                                                             logging.debug(`The games that returned back are: ${namesOfGames}`)
@@ -855,7 +836,6 @@ bot.on("message", message => {
                     } else {
                         if(rows) {
                             var thesnowflake = _.pluck(rows, "discordsnowflake")
-
                             var nameFromPlayers = `SELECT name FROM players WHERE discordsnowflake IN (${thesnowflake.map(function() { return "?" }).join(",")})`
 
                             logging.debug(`SQL: SELECT name FROM players WHERE discordsnowflake IN ('${thesnowflake.join("','")}')`)
@@ -888,20 +868,17 @@ bot.on("message", message => {
 
                 logging.debug("SQL: SELECT name,discordsnowflake FROM players WHERE ? IN (name, discordsnowflake, steamid)", searchTerm)
                 queryThis("get",getGames, searchTerm, function(err, row) {
-
                     if(err || row == undefined) {
                         var errorMessage = (!err) ? " No Error" : err.message
 
                         logging.error(`Either name was undefined and doesn't exist, or :${errorMessage}`)
                         message.reply("not found...")
                     } else {
-
                         var playerName = row.name
                         var discordSnowFlake = row.discordsnowflake
                         logging.debug(`Players name is: ${playerName} and snowflake is :${discordSnowFlake}`)
                     
                         if(row) {
-
                             var getPlayerGames = "SELECT pg.appid,g.name FROM playersgames AS pg INNER JOIN games AS g ON pg.appid = g.appid WHERE discordsnowflake = ?" 
                             
                             logging.debug(`SQL: SELECT pg.appid,g.name FROM playersgames AS pg INNER JOIN games AS g ON pg.appid = g.appid WHERE discordsnowflake = ${row.discordsnowflake}`)
@@ -985,7 +962,6 @@ bot.on("message", message => {
             //gettags <appid> - list all tags for an appid
 
                 var appid = args[0]
-
                 var getTagsSQL = "SELECT name,tags FROM games WHERE appid = ?"
 
                 logging.debug(`SQL: SELECT name,tags FROM games WHERE appid = ${appid}`)
@@ -1016,7 +992,6 @@ bot.on("message", message => {
                 logging.debug(`ARGS: ${JSON.stringify(args)}`)
 
                 var newtags = args.sort().toString().replace(/['"]+/g, "")
-
                 var tagsSQL = "SELECT appid,tags FROM games WHERE appid = ?"
 
                 logging.debug(`Tags are: ${newtags}`)
@@ -1147,7 +1122,6 @@ bot.on("message", message => {
             break}
             case "seedgames": {
             // seedgames - Local file holds inserts, pull requests for tag updates are appreciated
-
                 fs.readFile("./gamesdbseed.sql", function(err, data){
                     if(err) {
                         logging.error(`Seeding Error: ${err.message}`)

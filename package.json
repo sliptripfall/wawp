@@ -13,7 +13,7 @@
   "eslintConfig": {
     "env": {
       "browser": false,
-      "ndoe": true
+      "node": true
     }
   },
   "scripts": {
