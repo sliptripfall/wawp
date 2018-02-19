@@ -39,7 +39,7 @@ transports: [
 })
 
 // When true, it runs sqlite3 in verbose and enables console.log (false still prints warn/error)
-const DEBUG_MODE = true
+const DEBUG_MODE = false
 
 // When bot is ready to accept commands, you will see this banner - until then, wait.
 bot.on("ready", function () {
