@@ -28,7 +28,23 @@ var jwtClient = new google.auth.JWT(
   serviceAccount.private_key,
   scopes
 )
-// Logging
+// Check if directories exist
+function dirExists(path) {
+    try {
+        return fs.statSync(path).isDirectory()
+    } catch (e) {
+        if (e.code === 'ENOENT') {
+            return false;
+        } else {
+            throw e
+        }
+    }
+}
+// Create logging directory
+if (!dirExists('./logs')) {
+    fs.mkdirSync('./logs')
+}
+
 var logging = new (winston.Logger)({
 exitOnError: false,
 transports: [
@@ -39,7 +55,7 @@ transports: [
 })
 
 // When true, it runs sqlite3 in verbose and enables console.log (false still prints warn/error)
-const DEBUG_MODE = false
+const DEBUG_MODE = true
 
 // When bot is ready to accept commands, you will see this banner - until then, wait.
 bot.on("ready", function () {
@@ -345,12 +361,11 @@ bot.on("message", message => {
             break}
             case "unpretendbot": {
             // unpretendbot - Steam user Kongzoola, owning the most games (bot mock for debugging)
-
                 logging.debug(`SQL: DELETE FROM playersgames WHERE discordsnowflake = ${bot.user.id}`)
 
                 var delPlayerGames = `DELETE FROM playersgames WHERE discordsnowflake = ${bot.user.id}`
                 var delPlayer = "DELETE FROM players WHERE name = 'wawp'"
-
+                
                 queryThis("run", delPlayerGames, null, function(err){
                     if(err){
                         logging.error(`unpretendbot error: ${err}`)
@@ -372,7 +387,7 @@ bot.on("message", message => {
             break}
             case "addme": {
             // addme <steamid>[opt] - Adds a player by steamid (optional) and user, or nick, name.
-
+             
                 // 0ds is 0 for numeric sorting, and ds for discord snowflake - if you don't have a steam64id you still have to be unique
                 var steam64id = (args[0]) ? args[0] : `0ds${message.author.id}`
                 var myname = (!message.member.nickname) ? message.author.username : message.member.nickname 
@@ -585,7 +600,7 @@ bot.on("message", message => {
                 function buildCompatList(steamGames) { // eslint-disable-line no-inner-declarations
 
                     var steamSQL = "SELECT CAST(appid as int) AS appid FROM games"
-
+                    
                     queryThis("all", steamSQL, null, function(err, rows) {
                         if(err) {
                             logging.error(err.message)
