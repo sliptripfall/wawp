@@ -369,7 +369,7 @@ bot.on("message", message => {
 
                 var delPlayerGames = `DELETE FROM playersgames WHERE discordsnowflake = ${bot.user.id}`
                 var delPlayer = "DELETE FROM players WHERE name = 'wawp'"
-
+                
                 queryThis("run", delPlayerGames, null, function(err){
                     if(err){
                         logging.error(`unpretendbot error: ${err}`)
@@ -391,6 +391,7 @@ bot.on("message", message => {
             break}
             case "addme": {
             // addme <steamid>[opt] - Adds a player by steamid (optional) and user, or nick, name.
+             
                 // 0ds is 0 for numeric sorting, and ds for discord snowflake - if you don't have a steam64id you still have to be unique
                 var steam64id = (args[0]) ? args[0] : `0ds${message.author.id}`
                 var myname = (!message.member.nickname) ? message.author.username : message.member.nickname 
@@ -603,7 +604,7 @@ bot.on("message", message => {
                 function buildCompatList(steamGames) { // eslint-disable-line no-inner-declarations
 
                     var steamSQL = "SELECT CAST(appid as int) AS appid FROM games"
-
+                    
                     queryThis("all", steamSQL, null, function(err, rows) {
                         if(err) {
                             logging.error(err.message)
@@ -633,6 +634,7 @@ bot.on("message", message => {
                 }
 
                 function showCompatGames(compatList) {  // eslint-disable-line no-inner-declarations 
+
                     if(compatList.length < 1) {
                         logging.debug("Compat list missing, likely haven't ran multiplayer seeder")
                         message.reply("Hey, run the seeder or add games to the db")
@@ -834,6 +836,7 @@ bot.on("message", message => {
             break}
             case "getplayersbygame": {
             // getplayersbygame <appid> - returns mapping from playersgames table
+
                 if(!args[0]) {
                     logging.warn("Ugnnhhh scrub, you gotta give me an appid")
                     message.reply("Ugnnhhh scrub, you gotta give me an appid")
@@ -976,7 +979,8 @@ bot.on("message", message => {
 
             break}
             case "gettags": {
-            // gettags <appid> - list all tags for an appid
+            //gettags <appid> - list all tags for an appid
+
                 var appid = args[0]
                 var getTagsSQL = "SELECT name,tags FROM games WHERE appid = ?"
 
