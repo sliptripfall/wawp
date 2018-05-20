@@ -18,8 +18,7 @@ const version = require("./package.json").version
 var serviceAccount = require("./serviceAccountKey.json")
 // Scopes required for Storage, though this may not be necessary
 var scopes = [
-  "https://www.googleapis.commands/auth/devstorage.full_control",
-  "https://www.googleapis.com/auth/userinfo.email"
+  "https://www.googleapis.com/auth/cloud-platform"
 ]
 // Generate GCP tokens
 var jwtClient = new google.auth.JWT(
@@ -295,35 +294,40 @@ bot.on("message", message => {
 
                             logging.debug(`For ${name} their discordsnowflake is: ${discordSnowFlake} and their Steam64ID is: ${steam64id}`)
 
-                            message.channel.send({embed: {
-                                color: 3447003,
-                                title: `Identity for ${name}`,
-                                fields: [{
-                                    name: "Discord Snowflake",
-                                    value: discordSnowFlake,
-                                    inline: true
-                                },
-                                {
-                                    name: "Steam64ID",
-                                    value: steam64id,
-                                    inline: true
-                                },
-                                {
-                                    name: "Display: ",
-                                    value: message.guild.member(discordSnowFlake).displayName || "null",
-                                    inline: true
-                                },
-                                {
-                                    name: "Nick: ",
-                                    value: message.guild.member(discordSnowFlake).nickname || "null",
-                                    inline: true,
-                                },
-                                {
-                                    name: "User: ",
-                                    value: message.guild.member(discordSnowFlake).user.username || "null",
-                                    inline: true,
-                                }]
-                            }})
+                            if(message.guild.member(discordSnowFlake) == null) {
+                                logging.error(`User was in db, but wasn't found in channel...`)
+                                message.reply(`User was in db, but wasn't found in channel...`)
+                            } else {
+                                message.channel.send({embed: {
+                                    color: 3447003,
+                                    title: `Identity for ${name}`,
+                                    fields: [{
+                                        name: "Discord Snowflake",
+                                        value: discordSnowFlake,
+                                        inline: true
+                                    },
+                                    {
+                                        name: "Steam64ID",
+                                        value: steam64id,
+                                        inline: true
+                                    },
+                                    {
+                                        name: "Display: ",
+                                        value: message.guild.member(discordSnowFlake).displayName || "null",
+                                        inline: true
+                                    },
+                                    {
+                                        name: "Nick: ",
+                                        value: message.guild.member(discordSnowFlake).nickname || "null",
+                                        inline: true,
+                                    },
+                                    {
+                                        name: "User: ",
+                                        value: message.guild.member(discordSnowFlake).user.username || "null",
+                                        inline: true,
+                                    }]
+                                }})
+                            }
                         } else {
                             logging.debug(`SQL: ${sqlQuery} and Name: ${name}`)
                             message.reply(`That name doesn't exist, have them run ${commandPrefix}updatename if nick was changed`)
@@ -731,10 +735,11 @@ bot.on("message", message => {
                 } else {
 
                     var snowflakelookup = args
-                    var getSnowFlake = `SELECT discordsnowflake FROM players WHERE name IN (${snowflakelookup.map(function() { return "?" }).join(",")})`
 
-                    logging.debug(`SQL: SELECT discordsnowflake FROM players WHERE name IN (${snowflakelookup})`)
-                    queryThis("all", getSnowFlake, snowflakelookup, function(err, rows){
+                    var getSnowFlake = `SELECT discordsnowflake FROM players WHERE name IN ('${snowflakelookup.join("','")}') OR steamid IN ('${snowflakelookup.join("','")}') OR discordsnowflake IN ('${snowflakelookup.join("','")}')`
+                    logging.debug(`SQL: SELECT discordsnowflake FROM players WHERE name IN ('${snowflakelookup.join("','")}') OR steamid IN ('${snowflakelookup.join("','")}') OR discordsnowflake IN ('${snowflakelookup.join("','")}')`)
+
+                    queryThis("all", getSnowFlake, null, function(err, rows){ 
                         if(err){
                             logging.error(err.message)
                             message.reply("One or more of the names is not valid")
