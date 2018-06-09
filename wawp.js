@@ -32,16 +32,16 @@ function dirExists(path) {
     try {
         return fs.statSync(path).isDirectory()
     } catch (e) {
-        if (e.code === 'ENOENT') {
-            return false;
+        if (e.code === "ENOENT") {
+            return false
         } else {
             throw e
         }
     }
 }
 // Create logging directory
-if (!dirExists('./logs')) {
-    fs.mkdirSync('./logs')
+if (!dirExists("./logs")) {
+    fs.mkdirSync("./logs")
 }
 
 var logging = new (winston.Logger)({
@@ -154,7 +154,7 @@ bot.on("message", message => {
         // Break <command> and <args[0]> <args[1]> <args[2]> ... <args[n]>
         var args = message.content.slice(commandPrefix.length).trim().split(/ +/g)
         const command = args.shift().toLowerCase()
-       
+
         logging.debug(`Command was: ${command} and args were ${args}`)
 
        // The god function
@@ -295,8 +295,8 @@ bot.on("message", message => {
                             logging.debug(`For ${name} their discordsnowflake is: ${discordSnowFlake} and their Steam64ID is: ${steam64id}`)
 
                             if(message.guild.member(discordSnowFlake) == null) {
-                                logging.error(`User was in db, but wasn't found in channel...`)
-                                message.reply(`User was in db, but wasn't found in channel...`)
+                                logging.error("User was in db, but wasn't found in channel...")
+                                message.reply("User was in db, but wasn't found in channel...")
                             } else {
                                 message.channel.send({embed: {
                                     color: 3447003,
@@ -369,7 +369,7 @@ bot.on("message", message => {
 
                 var delPlayerGames = `DELETE FROM playersgames WHERE discordsnowflake = ${bot.user.id}`
                 var delPlayer = "DELETE FROM players WHERE name = 'wawp'"
-                
+
                 queryThis("run", delPlayerGames, null, function(err){
                     if(err){
                         logging.error(`unpretendbot error: ${err}`)
@@ -384,17 +384,17 @@ bot.on("message", message => {
                             } else {
                                 message.channel.send("I'm not Kongzoola anymore.")
                             }
-                       })                       
+                       })
                     }
                 })
 
             break}
             case "addme": {
             // addme <steamid>[opt] - Adds a player by steamid (optional) and user, or nick, name.
-             
+
                 // 0ds is 0 for numeric sorting, and ds for discord snowflake - if you don't have a steam64id you still have to be unique
                 var steam64id = (args[0]) ? args[0] : `0ds${message.author.id}`
-                var myname = (!message.member.nickname) ? message.author.username : message.member.nickname 
+                var myname = (!message.member.nickname) ? message.author.username : message.member.nickname
 
                 logging.debug(`SQL: INSERT INTO players (name, steamid, discordsnowflake) VALUES (${myname},${steam64id},${message.author.id})`)
                 queryThis("run", "INSERT INTO players (name, steamid, discordsnowflake) VALUES (?,?,?)", [myname,steam64id,message.author.id], function(err){
@@ -402,7 +402,7 @@ bot.on("message", message => {
                         logging.error(`ADDME: could not add you ${JSON.stringify(err)}`)
                         message.channel.send("Could not insert you into the database")
                     } else {
-                        message.channel.send(`Player ${myname} has been inserted!`)                        
+                        message.channel.send(`Player ${myname} has been inserted!`)
                     }
                 })
 
@@ -514,7 +514,7 @@ bot.on("message", message => {
                           } else {
                             // Assign access token for GC Storage
                             var accessToken = tokens.access_token
-                           
+
                             var headers = {
                                     "Content-Type": "application/json",
                                     "User-Agent": `Discord Bot/${version}`,
@@ -604,7 +604,7 @@ bot.on("message", message => {
                 function buildCompatList(steamGames) { // eslint-disable-line no-inner-declarations
 
                     var steamSQL = "SELECT CAST(appid as int) AS appid FROM games"
-                    
+
                     queryThis("all", steamSQL, null, function(err, rows) {
                         if(err) {
                             logging.error(err.message)
@@ -659,31 +659,56 @@ bot.on("message", message => {
                             queryThis("exec", gameSQL, null, function(err){
                                 if(!err){
                                     logging.error(`Warning SQL error: ${err}`)
-                                    return false                                      
+                                    return false
                                 } else {
 
                                     logging.debug((Date.now() - start) + "ms to finish")
 
-                                    var headers = {
-                                        "User-Agent": `Discord Bot/${version}`,
-                                        "Content-Type": "application/x-www-form-urlencoded"
-                                    }
+                                    var jsonOutput = JSON.stringify(rows, null, 4)  // eslint-disable-line no-redeclare
+                                    var fileext = "json"                            // eslint-disable-line no-redeclare
+                                    var dataSize = Buffer.byteLength(jsonOutput, "utf8")
 
-                                    var options = {
-                                        url: "http://text-share.com/api/create",
-                                        method: "POST",
-                                        headers: headers,
-                                        form: "text="+encodeURIComponent(JSON.stringify(rows))
-                                    }
-
-                                    request(options, function(err, res, body){
-                                        if(!err && res.statusCode == 200) {
-                                            logging.debug(body)
-                                            message.reply(`Here's the list: ${body} take this data and go here http://json2table.com or search for json beautifiers`)
-                                        } else {
-                                            logging.error(err.message)
-                                            message.reply("I wasn't able to upload the data, maybe the text host is down...")
+                                    jwtClient.authorize(function(error, tokens) {
+                                        if (error) {
+                                            logging.error("GC Storage ERROR: Error making request to generate access token:", error)
                                             return false
+                                        } else if (tokens.access_token === null) {
+                                            logging.error("GC Storage ERROR: Provided service account does not have permission to generate access tokens")
+                                            return false
+                                        } else {
+                                            // Assign access token for GC Storage
+                                            var accessToken = tokens.access_token
+
+                                            var headers = {
+                                                    "Content-Type": "application/json",
+                                                    "User-Agent": `Discord Bot/${version}`,
+                                                    "Content-Length": dataSize,
+                                                    "Authorization": `Bearer ${accessToken}`
+                                            }
+
+                                            var options = {
+                                                url: `https://www.googleapis.com/upload/storage/v1/b/${gcpstorageBucket}/o?uploadType=media&name=games.${fileext}`,
+                                                method: "POST",
+                                                headers: headers,
+                                                body: jsonOutput
+                                            }
+
+                                            request(options, function(err, res, body){
+                                                logging.debug(`Statuscode was: ${res.statusCode} \n res is: ${JSON.stringify(res)}\n`)
+                                                if(err) {
+                                                    logging.error(`Error was: ${JSON.stringify(err)} and body was: ${JSON.stringify(body)}`)
+                                                    return false
+                                                } else if ( res.statusCode == 200) {
+                                                    var body = JSON.parse(body) // eslint-disable-line no-redeclare
+                                                    var link = body.mediaLink.toString()
+
+                                                    logging.debug(`Games here: ${link}`)
+                                                    message.reply(`Games here: ${link} `)
+                                                } else {
+                                                    logging.error(`Error was: ${JSON.stringify(err)} and body was: ${JSON.stringify(body)}`)
+                                                    return false
+                                                }
+                                            })
                                         }
                                     })
                                 }
@@ -794,28 +819,52 @@ bot.on("message", message => {
                                                             message.reply(`The games in common are: ${namesOfGames}`)
                                                         } else {
                                                             logging.debug("The games are too big for console return, over 1.9k chars")
-
+                                                        
                                                             // We're going to send the data to a text hosting service instead, because it's too big for discord
-                                                            var headers = {
-                                                                    "User-Agent": `Discord Bot/${version}`,
-                                                                    "Content-Type": "application/x-www-form-urlencoded"
-                                                                }
+                                                            var fileext = "txt"             // eslint-disable-line no-redeclare
+                                                            var dataSize = Buffer.byteLength(namesOfGames, "utf8")
 
-                                                            var options = {
-                                                                url: "http://text-share.com/api/create",
-                                                                method: "POST",
-                                                                headers: headers,
-                                                                form: "text="+encodeURIComponent(namesOfGames)
-                                                            }
-
-                                                            request(options, function(err, res, body){
-                                                                if(!err && res.statusCode == 200) {
-                                                                    logging.debug(body)
-                                                                    message.reply(`Over char limit, games here: ${body} `)
-                                                                } else {
-                                                                    logging.error(err.message)
-                                                                    message.reply("Couldn't create the list, check if text hosting is down")
+                                                            jwtClient.authorize(function(error, tokens) {
+                                                                if (error) {
+                                                                    logging.error("GC Storage ERROR: Error making request to generate access token:", error)
                                                                     return false
+                                                                } else if (tokens.access_token === null) {
+                                                                    logging.error("GC Storage ERROR: Provided service account does not have permission to generate access tokens")
+                                                                    return false
+                                                                } else {
+                                                                    // Assign access token for GC Storage
+                                                                    var accessToken = tokens.access_token
+
+                                                                    var headers = {
+                                                                            "Content-Type": "text/csv",
+                                                                            "User-Agent": `Discord Bot/${version}`,
+                                                                            "Content-Length": dataSize,
+                                                                            "Authorization": `Bearer ${accessToken}`
+                                                                    }
+
+                                                                    var options = {
+                                                                        url: `https://www.googleapis.com/upload/storage/v1/b/${gcpstorageBucket}/o?uploadType=media&name=compare.${fileext}`,
+                                                                        method: "POST",
+                                                                        headers: headers,
+                                                                        body: namesOfGames
+                                                                    }
+
+                                                                    request(options, function(err, res, body){
+                                                                        logging.debug(`Statuscode was: ${res.statusCode} \n res is: ${JSON.stringify(res)}\n`)
+                                                                        if(err) {
+                                                                            logging.error(`Error was: ${JSON.stringify(err)} and body was: ${JSON.stringify(body)}`)
+                                                                            return false
+                                                                        } else if ( res.statusCode == 200) {
+                                                                            var body = JSON.parse(body) // eslint-disable-line no-redeclare
+                                                                            var link = body.mediaLink.toString()
+
+                                                                            logging.debug(`Games here: ${link}`)
+                                                                            message.reply(`Games here: ${link} `)
+                                                                        } else {
+                                                                            logging.error(`Error was: ${JSON.stringify(err)} and body was: ${JSON.stringify(body)}`)
+                                                                            return false
+                                                                        }
+                                                                    })
                                                                 }
                                                             })
                                                         }
@@ -1266,5 +1315,4 @@ bot.on("message", message => {
          }
      }
 })
-
 bot.login(discordapikey)
